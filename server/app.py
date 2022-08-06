@@ -1,5 +1,6 @@
 import email
 from flask import Flask, request, send_file, session, redirect, Response, jsonify
+from flask.sessions import SecureCookieSessionInterface
 from flask_cors import CORS, cross_origin
 from flask_session import Session
 
@@ -12,6 +13,7 @@ CORS(app, resources={r"/*": { "origins": "*"}}, supports_credentials=True)
 app.config.from_object(ApplicationConfig)
 server_session = Session(app)
 db = database.Database()
+session_cookie = SecureCookieSessionInterface().get_signing_serializer(app)
 
 UPLOAD_FOLDER = 'static/videos'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -30,7 +32,7 @@ def signup():
 
 
 @app.route("/login", methods = ['POST'])
-#@cross_origin(origin='*',headers=['Content- Type','Authorization'])
+@cross_origin(origin='*',headers=['Control-Allow-Credentials','Access-Control-Allow-Origin'])
 def login():
     data = request.get_json()
     username = data["username"]
@@ -53,6 +55,20 @@ def verf():
     if user:
         return Response(jsonify(status="true"), status=200)
     return Response(jsonify(status="false"), status=401)
+
+
+
+@app.after_request
+def creds(response):
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+
+@app.after_request
+def cookies(response):
+    same_cookie = session_cookie.dumps(dict(session))
+    response.headers.add("Set-Cookie", f"my_cookie={same_cookie}; Secure; HttpOnly; SameSite=None; Path=/;")
+    return response
 
 
 if __name__ == "__main__":
