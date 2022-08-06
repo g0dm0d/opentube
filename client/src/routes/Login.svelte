@@ -11,9 +11,11 @@
     async function Login () {
 		  await fetch('http://127.0.0.1:8080/login', {
 			  method: 'POST',
+        credentials: 'include',
         mode: 'cors',
         headers: {
           'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
           'Content-Type': 'application/json',
           'withCredentials': 'true',
           'credentials': 'include'
